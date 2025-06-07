@@ -17,9 +17,24 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 					{{#items @root.E.S @root.Data.SOURCE}}
 						{{#test Id in ../ItemIds}}
 							<color=red>TODO: {{../Count}} x {{i18n ../Id}} -> {{../../ContainerName}}</color>
-							{{#move ../. @root.E.S ../../ContainerName}}
-								<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}}</color>
-							{{/move}}
+							{{#if ../../Limit}}
+								{{#move ../. @root.E.S ../../ContainerName ../../Limit}}
+									<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}} (Limit: {{../../../Limit}})</color>
+								{{else}}
+									{{#if ../../../OverflowContainer}}
+										<color=yellow>OVERFLOW: Moving to {{../../../OverflowContainer}}</color>
+										{{#move ../. @root.E.S ../../../OverflowContainer}}
+											<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../OverflowContainer}} (Overflow)</color>
+										{{/move}}
+									{{else}}
+										<color=yellow>SKIPPED: Container {{../../../ContainerName}} reached limit of {{../../../Limit}}</color>
+									{{/if}}
+								{{/move}}
+							{{else}}
+								{{#move ../. @root.E.S ../../ContainerName}}
+									<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}}</color>
+								{{/move}}
+							{{/if}}
 						{{/test}}
 					{{/items}}
 					{{split Lists ','}}
@@ -27,9 +42,24 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 							{{#items @root.E.S @root.Data.SOURCE}}
 								{{#test Id in (lookup @root.ids ../.)}}
 									<color=red>[LISTS]TODO: {{../Count}} x {{i18n ../Id}} -> {{../../../../ContainerName}}</color>
-									{{#move ../. @root.E.S ../../../../ContainerName}}
-										<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}}</color>
-									{{/move}}
+									{{#if ../../../../Limit}}
+										{{#move ../. @root.E.S ../../../../ContainerName ../../../../Limit}}
+											<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}} (Limit: {{../../../../../Limit}})</color>
+										{{else}}
+											{{#if ../../../../../OverflowContainer}}
+												<color=yellow>[LISTS]OVERFLOW: Moving to {{../../../../../OverflowContainer}}</color>
+												{{#move ../. @root.E.S ../../../../../OverflowContainer}}
+													<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../../OverflowContainer}} (Overflow)</color>
+												{{/move}}
+											{{else}}
+												<color=yellow>[LISTS]SKIPPED: Container {{../../../../../ContainerName}} reached limit of {{../../../../../Limit}}</color>
+											{{/if}}
+										{{/move}}
+									{{else}}
+										{{#move ../. @root.E.S ../../../../ContainerName}}
+											<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}}</color>
+										{{/move}}
+									{{/if}}
 								{{/test}}
 							{{/items}}
 						{{/each}}

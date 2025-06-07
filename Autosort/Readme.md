@@ -3,8 +3,9 @@
 - Es werden auf der Ausgabe alle Items im Input Container angezeigt, die noch nicht zugeordnet sind.
 - IDs müssen dann in dem [[#DB LCD]] dem gewünschten Container zugeordnet werden.
 - Wenn ein Item zugeordnet ist, folgt eine entsprechende Ausgabe unter dem zweiten Trennstrich:
-	- Grün: Erfolgreich verschoben (Diese Anzeige verschwindet nach ein paar Sekunden.)
-	- Bleibt Rot: Container Nicht gefunden, oder Container gerade gesperrt. auch wenn z.B. von einem anderen Spieler gerade auf den Zielcontainer zugegriffen wird, bleibt die Anzeige Rot.
+        - Grün: Erfolgreich verschoben (Diese Anzeige verschwindet nach ein paar Sekunden.)
+    - Gelb: Container hat Limit erreicht - Item wurde übersprungen oder in Überlauf-Container verschoben
+    - Bleibt Rot: Container nicht gefunden, oder Container gerade gesperrt. auch wenn z.B. von einem anderen Spieler gerade auf den Zielcontainer zugegriffen wird, bleibt die Anzeige Rot.
 
 ![](Screenshots/img2.png)
 
@@ -13,7 +14,7 @@
 - 3x LCD (Script, Datenbank, Anzeige)
 #### Container-Namen:
 - Input (Nur hier werden Items entnommen!): `_AUTOSORT_IN`
-	- Kann im Script angepasst werden (Zeile 2.)
+    - Kann im Script angepasst werden (Zeile 2.)
 #### LCD-Namen:
 - Script-LCD: `Script:Autosort*`
 - DB-LCD: `DB_AUTOSORT`
@@ -28,22 +29,33 @@
     - ItemIds ist eine Kommagetrennte Liste an IDs die in den Container einsortiert werden sollen.
     - Lists ist der Name der Liste, die zusätzlich in den Container sortiert werden soll.
         - Die Namen der Listen finden sich [hier](https://github.com/GitHub-TC/EmpyrionScripting#vordefinierte-id-listen) (Readme des Empyrion Scripting Mod)
+    - Limit (optional) ist die maximale Anzahl von Items, die in den Container gelegt werden sollen.
+        - Wenn das Limit erreicht ist und kein OverflowContainer definiert ist, bleiben die Items im Quellcontainer.
+    - OverflowContainer (optional) ist der Name des Containers, in den Items verschoben werden, wenn das Limit erreicht ist.
+        - Wird nur berücksichtigt, wenn auch ein Limit definiert ist.
     - Die ItemIds haben Vorrang vor den Listen, soll also etwas aus einer Liste in einen anderen Container einsortiert werden, kann die ID auch einfach in der ItemId Liste eingetragen werden.
 - Bei Item-Listen über 2000 Zeichen muss das JSON komprimiert werden, damit es auf den LCD passt. hierfür gibt es tools wie z.B: https://jsonformatter.org/json-minify
-	- Beispiel der Fehlermeldung bei einem zu langen Datenbankeintrag:
+    - Beispiel der Fehlermeldung bei einem zu langen Datenbankeintrag:
 ![](Screenshots/img3.png)
 #### Inhalt DB-LCD:
 ```json
 [
-	{
-		"ContainerName": "1. Materialien",
-		"ItemIds": "2247,4316,4360,4361,5104,5913,5914,5920,5921,5923,5927,7301,7312",
-		"Lists": "Ingot,Components,EdenComponents"
-	},
-	{
-		"ContainerName": "_AMMO_SCHIFF",
-		"ItemIds": "4150,4152,4262,4263,4267,5719,5849"
-	}
+    {
+        "ContainerName": "1. Materialien",
+        "ItemIds": "2247,4316,4360,4361",
+        "Lists": "Ingot,Components"
+    },
+    {
+        "ContainerName": "Eisenkiste",
+        "ItemIds": "2247",
+        "Limit": 50000
+    },
+    {
+        "ContainerName": "Werkzeugkiste",
+        "ItemIds": "4150,4152,4262",
+        "Limit": 10000,
+        "OverflowContainer": "Lagerkiste"
+    }
 ]
 ```
 
@@ -70,9 +82,24 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 {{#items @root.E.S @root.Data.SOURCE}}
 {{#test Id in ../ItemIds}}
 <color=red>TODO: {{../Count}} x {{i18n ../Id}} -> {{../../ContainerName}}</color>
+{{#if ../../Limit}}
+{{#move ../. @root.E.S ../../ContainerName ../../Limit}}
+<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}} (Limit: {{../../../Limit}})</color>
+{{else}}
+{{#if ../../../OverflowContainer}}
+<color=yellow>OVERFLOW: Moving to {{../../../OverflowContainer}}</color>
+{{#move ../. @root.E.S ../../../OverflowContainer}}
+<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../OverflowContainer}} (Overflow)</color>
+{{/move}}
+{{else}}
+<color=yellow>SKIPPED: Container {{../../../ContainerName}} reached limit of {{../../../Limit}}</color>
+{{/if}}
+{{/move}}
+{{else}}
 {{#move ../. @root.E.S ../../ContainerName}}
 <color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}}</color>
 {{/move}}
+{{/if}}
 {{/test}}
 {{/items}}
 {{split Lists ','}}
@@ -80,9 +107,24 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 {{#items @root.E.S @root.Data.SOURCE}}
 {{#test Id in (lookup @root.ids ../.)}}
 <color=red>[LISTS]TODO: {{../Count}} x {{i18n ../Id}} -> {{../../../../ContainerName}}</color>
+{{#if ../../../../Limit}}
+{{#move ../. @root.E.S ../../../../ContainerName ../../../../Limit}}
+<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}} (Limit: {{../../../../../Limit}})</color>
+{{else}}
+{{#if ../../../../../OverflowContainer}}
+<color=yellow>[LISTS]OVERFLOW: Moving to {{../../../../../OverflowContainer}}</color>
+{{#move ../. @root.E.S ../../../../../OverflowContainer}}
+<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../../OverflowContainer}} (Overflow)</color>
+{{/move}}
+{{else}}
+<color=yellow>[LISTS]SKIPPED: Container {{../../../../../ContainerName}} reached limit of {{../../../../../Limit}}</color>
+{{/if}}
+{{/move}}
+{{else}}
 {{#move ../. @root.E.S ../../../../ContainerName}}
 <color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}}</color>
 {{/move}}
+{{/if}}
 {{/test}}
 {{/items}}
 {{/each}}
@@ -92,4 +134,3 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 {{/fromjson}}
 {{/gettext}}
 {{/devices}}
-```
