@@ -20,7 +20,8 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 							{{#if ../../Limit}}
 								{{#move ../. @root.E.S ../../ContainerName ../../Limit}}
 									<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}} (Limit: {{../../../Limit}})</color>
-								{{else}}
+								{{/move}}
+								{{#unless @last}}
 									{{#if ../../../OverflowContainer}}
 										<color=yellow>OVERFLOW: Moving to {{../../../OverflowContainer}}</color>
 										{{#move ../. @root.E.S ../../../OverflowContainer}}
@@ -29,7 +30,7 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 									{{else}}
 										<color=yellow>SKIPPED: Container {{../../../ContainerName}} reached limit of {{../../../Limit}}</color>
 									{{/if}}
-								{{/move}}
+								{{/unless}}
 							{{else}}
 								{{#move ../. @root.E.S ../../ContainerName}}
 									<color=green>DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../ContainerName}}</color>
@@ -45,7 +46,8 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 									{{#if ../../../../Limit}}
 										{{#move ../. @root.E.S ../../../../ContainerName ../../../../Limit}}
 											<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}} (Limit: {{../../../../../Limit}})</color>
-										{{else}}
+										{{/move}}
+										{{#unless @last}}
 											{{#if ../../../../../OverflowContainer}}
 												<color=yellow>[LISTS]OVERFLOW: Moving to {{../../../../../OverflowContainer}}</color>
 												{{#move ../. @root.E.S ../../../../../OverflowContainer}}
@@ -54,7 +56,7 @@ ID<pos=4em></pos><pos=5em>Anzahl</pos><pos=11em>Name</pos>
 											{{else}}
 												<color=yellow>[LISTS]SKIPPED: Container {{../../../../../ContainerName}} reached limit of {{../../../../../Limit}}</color>
 											{{/if}}
-										{{/move}}
+										{{/unless}}
 									{{else}}
 										{{#move ../. @root.E.S ../../../../ContainerName}}
 											<color=green>[LISTS]DONE: {{../../Count}} x {{i18n ../../Id}} -> {{../../../../../ContainerName}}</color>
